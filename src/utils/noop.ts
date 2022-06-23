@@ -4,9 +4,13 @@ import {
     Serializer,
     Transaction,
 } from '@greymass/eosio'
-import { Cosigner } from '../types'
 
-import { MAX_CPU_USAGE_MS } from '../config'
+import {
+    COSIGN_CONTRACT,
+    MAX_CPU_USAGE_MS,
+} from '../config'
+
+import { Cosigner } from '../types'
 
 export function prependNoopAction(
     transaction: Transaction,
@@ -23,7 +27,7 @@ export function prependNoopAction(
         // specify the CPU restrictions on the transaction
         max_cpu_usage_ms: MAX_CPU_USAGE_MS,
     }, [{
-        contract: noopContract,
+        contract: COSIGN_CONTRACT,
         abi: noopAbi
     }])
     // Return the packed + unsigned transaction
@@ -36,7 +40,7 @@ export function prependNoopAction(
 
 export function getNoopAction(cosigner: Cosigner) {
     return {
-        account: 'greymassnoop',
+        account: COSIGN_CONTRACT,
         name: 'noop',
         authorization: [
             {
@@ -47,8 +51,6 @@ export function getNoopAction(cosigner: Cosigner) {
         data: {},
     }
 }
-
-export const noopContract = 'greymassnoop'
 
 export const noopAbi = ABI.from({
     version: 'eosio::abi/1.1',

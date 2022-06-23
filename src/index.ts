@@ -8,9 +8,15 @@ import {
 import { cosignTransaction } from './utils/cosign'
 import { prependNoopAction } from './utils/noop'
 import { parseRequest } from './utils/parse'
-
-import { client, PORT, COSIGN_ACCOUNT, COSIGN_PERMISSION, COSIGN_PRIVATE_KEY } from './config'
 import { Cosigner } from './types'
+
+import {
+    client,
+    PORT,
+    COSIGN_ACCOUNT,
+    COSIGN_PERMISSION,
+    COSIGN_PRIVATE_KEY,
+} from './config'
 
 
 const POMELO_COSIGNER: Cosigner = {
