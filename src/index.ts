@@ -10,29 +10,21 @@ import { prependNoopAction } from './utils/noop'
 import { parseRequest } from './utils/parse'
 
 import { client, PORT, COSIGN_ACCOUNT, COSIGN_PERMISSION, COSIGN_PRIVATE_KEY } from './config'
-import {
-    Cosigner
-} from './types'
+import { Cosigner } from './types'
 
 
-const defaultCosigner: Cosigner = {
-    account: Name.from(COSIGN_ACCOUNT),
-    permission: Name.from(COSIGN_PERMISSION),
-    private: PrivateKey.from(COSIGN_PRIVATE_KEY)
-}
-
-export function getCosigner(): Cosigner {
-    return {
-        ...defaultCosigner,
-        public: defaultCosigner.private.toPublic(),
-    }
+const POMELO_COSIGNER: Cosigner = {
+        account: Name.from(COSIGN_ACCOUNT),
+        permission: Name.from(COSIGN_PERMISSION),
+        private: PrivateKey.from(COSIGN_PRIVATE_KEY),
+        public: PrivateKey.from(COSIGN_PRIVATE_KEY).toPublic(),
 }
 
 
 /*
 curl -XGET 'localhost:8080/cosign_trx' \
     -H 'content-type: application/json' \
-    -d '{"ref":"pomelo","request":"esr://gmNgZGA4cCSk8aVELwMQHHj56AqjgFPBxRzxs2dBAiveGhkJGhiGNggotmkgywAA","signer":{"actor":"tralivali111","permission":"active"}}'
+    -d '{"ref":"pomelo","request":"esr://gmNgZGA4cCSk8aVELwMQHHj56AqjgFPBxRzxs2dBAiveGhkJGhiGNggotmkgywAA","signer":{"actor":"myaccount","permission":"active"}}'
 */
 const app = express();
 
@@ -45,20 +37,21 @@ app.get( "/cosign_trx", async ( req, res ) => {
         return res.status(400).json( 'Provide body payload' );
     }
 
+    // Process the body of the request
+    const request = await parseRequest(body)
+    if (!request) {
+        const message = 'Transaction not supplied in resource request. Either request, transaction, or packedTransaction must be specified in the request.'
+        return res.status(400).json(message)
+    }
+
+    if (!body.signer) {
+        const message = 'Signer not supplied in resource request. The signer property must be specified in the request.'
+        return res.status(400).json(message)
+    }
+
+    const signer = PermissionLevel.from(body.signer)
+
     try {
-        // Process the body of the request
-        const request = await parseRequest(body)
-        if (!request) {
-            const message = 'Transaction not supplied in resource request. Either request, transaction, or packedTransaction must be specified in the request.'
-            return res.status(400).json(message)
-        }
-
-        if (!body.signer) {
-            const message = 'Signer not supplied in resource request. The signer property must be specified in the request.'
-            return res.status(400).json(message)
-        }
-
-        const signer = PermissionLevel.from(body.signer)
 
         // Load required ABIs for transaction
         const abis = await request.fetchAbis()
@@ -72,16 +65,14 @@ app.get( "/cosign_trx", async ( req, res ) => {
 
         // TODO: make sure resolved.transaction.actions contains only valid POMELO actions
 
-        const cosigner = getCosigner()
-
         // Modify the resolved transaction to append the cosigning action
-        const modified = prependNoopAction(resolved.transaction, cosigner)
+        const modified = prependNoopAction(resolved.transaction, POMELO_COSIGNER)
 
         const {
             result,
             signatures,
             transaction,
-        } = await cosignTransaction(cosigner, modified)
+        } = await cosignTransaction(POMELO_COSIGNER, modified)
 
         // Serve the resulting transaction and signature
         res.statusCode = 200
@@ -102,5 +93,5 @@ app.get( "/cosign_trx", async ( req, res ) => {
 } );
 
 app.listen( PORT, () => {
-    console.log( `server started at http://localhost:${ PORT }` );
+    console.log( `🚀 server started on port ${ PORT }` );
 } );

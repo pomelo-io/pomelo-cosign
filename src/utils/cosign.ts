@@ -5,9 +5,7 @@ import {
     Transaction,
 } from '@greymass/eosio'
 
-import {
-    Cosigner,
-} from '../types'
+import { Cosigner } from '../types'
 
 import { opts } from './esr'
 import { signTransaction } from './sign'
