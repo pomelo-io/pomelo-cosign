@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 dotenv.config();
 
 export const PORT = process.env.PORT || 8080
-export const CHAIN_ID = '2a02a0053e5a8cf73a56ba0fda11e4d92e0238a4a2aa74fccf46d5a910746840'
+export const CHAIN_ID = 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906'
 export const NODEOS_ENDPOINT = process.env.NODEOS_ENDPOINT || "https://eos.eosn.io"
 
 export const COSIGN_ACCOUNT = process.env.COSIGN_ACCOUNT || 'noop.pomelo'
