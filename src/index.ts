@@ -12,7 +12,6 @@ import { parseRequest } from './utils/parse'
 import { Cosigner } from './types'
 
 import {
-    client,
     PORT,
     COSIGN_ACCOUNT,
     COSIGN_PERMISSION,
@@ -21,10 +20,10 @@ import {
 
 
 const POMELO_COSIGNER: Cosigner = {
-        account: Name.from(COSIGN_ACCOUNT),
-        permission: Name.from(COSIGN_PERMISSION),
-        private: PrivateKey.from(COSIGN_PRIVATE_KEY),
-        public: PrivateKey.from(COSIGN_PRIVATE_KEY).toPublic(),
+    account: Name.from(COSIGN_ACCOUNT),
+    permission: Name.from(COSIGN_PERMISSION),
+    private: PrivateKey.from(COSIGN_PRIVATE_KEY),
+    public: PrivateKey.from(COSIGN_PRIVATE_KEY).toPublic(),
 }
 
 
@@ -45,10 +44,9 @@ app.post( "/cosign_trx", async ( req, res ) => {
         return res.status(400).json( 'Provide body payload' );
     }
 
-    console.log('🐙', body)
     // Process the body of the request
-    const request = await parseRequest(body)
-    if (!request) {
+    const transaction = await parseRequest(body)
+    if (!transaction) {
         const message = 'Transaction not supplied in resource request. Either request, transaction, or packedTransaction must be specified in the request.'
         return res.status(400).json(message)
     }
@@ -62,27 +60,13 @@ app.post( "/cosign_trx", async ( req, res ) => {
 
     try {
 
-        // Load required ABIs for transaction
-        const abis = await request.fetchAbis()
-
-        // Generate tapos values for transaction
-        const info = await client.v1.chain.get_info()
-        const header = info.getTransactionHeader(300) // 300 = seconds this cosigned transaction is valid for
-
-        // Resolve the signing request
-        const resolved = request.resolve(abis, signer, header)
-
         // TODO: make sure resolved.transaction.actions contains only valid POMELO actions
 
-        // Modify the resolved transaction to append the cosigning action
-        const modified = prependNoopAction(resolved.transaction, POMELO_COSIGNER)
-        console.log('🍅', JSON.stringify(modified.toJSON(), null, 2))
+        // prepend actions with noop action
+        const modified = prependNoopAction(transaction, POMELO_COSIGNER)
 
-        const {
-            result,
-            signatures,
-            transaction,
-        } = await cosignTransaction(POMELO_COSIGNER, modified)
+        // sign the transaction
+        const cosigned = await cosignTransaction(POMELO_COSIGNER, modified)
 
         // Serve the resulting transaction and signature
         res.statusCode = 200
@@ -90,9 +74,8 @@ app.post( "/cosign_trx", async ( req, res ) => {
             JSON.stringify({
                 code: 200,
                 data: {
-                    request: result.data.req,
-                    transaction,
-                    signatures,
+                    transaction: cosigned.transaction,
+                    signatures: cosigned.signatures,
                 },
             })
         )

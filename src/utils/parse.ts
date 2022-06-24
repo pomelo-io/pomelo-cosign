@@ -3,18 +3,13 @@ import { SigningRequest } from 'eosio-signing-request'
 import {
     AnyAction,
     Name,
-    PackedTransaction,
     Transaction,
 } from '@greymass/eosio'
 
 import { getCacheAbi, opts } from './esr'
 
-export async function parseRequest(body: any): Promise<SigningRequest | false> {
+export async function parseRequest(body: any): Promise<Transaction | false> {
     try {
-        // Resource Provider Specification: Process based on ESR payload
-        if (body.request) {
-            return await SigningRequest.from(body.request, opts)
-        }
 
         // Resource Provider Specification: Process based on deserialized transaction
         if (body.transaction) {
@@ -25,18 +20,7 @@ export async function parseRequest(body: any): Promise<SigningRequest | false> {
                     abi: await getCacheAbi(Name.from(account))
                 }
             }))
-            const decoded = Transaction.from(body.transaction, abis)
-            return await SigningRequest.create({
-                transaction: decoded
-            }, opts)
-        }
-
-        // Resource Provider Specification: Process based on packed transaction
-        if (body.packedTransaction) {
-            const decoded = PackedTransaction.from(body.packedTransaction)
-            return await SigningRequest.create({
-                transaction: decoded.getTransaction()
-            }, opts)
+            return Transaction.from(body.transaction, abis)
         }
     } catch (error) {
         console.log({ error }, 'error parsing incoming transaction')
