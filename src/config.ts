@@ -19,7 +19,7 @@ export const COSIGN_PRIVATE_KEY = process.env.COSIGN_PRIVATE_KEY
 
 if (!process.env.COSIGN_PRIVATE_KEY) throw new Error("[COSIGN_PRIVATE_KEY] is required");
 
-export const MAX_CPU_USAGE_MS = 5
+export const MAX_CPU_USAGE_MS = 20
 
 
 // API Client - basic node

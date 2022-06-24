@@ -1,4 +1,5 @@
 import express from "express";
+const cors = require('cors');
 import {
     Name,
     PermissionLevel,
@@ -28,21 +29,23 @@ const POMELO_COSIGNER: Cosigner = {
 
 
 /*
-curl -XGET 'localhost:8080/cosign_trx' \
+curl -POST 'localhost:8080/cosign_trx' \
     -H 'content-type: application/json' \
     -d '{"ref":"pomelo","request":"esr://gmNgZGA4cCSk8aVELwMQHHj56AqjgFPBxRzxs2dBAiveGhkJGhiGNggotmkgywAA","signer":{"actor":"myaccount","permission":"active"}}'
 */
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
-app.get( "/cosign_trx", async ( req, res ) => {
+app.post( "/cosign_trx", async ( req, res ) => {
 
     const { body } = req;
     if (!body) {
         return res.status(400).json( 'Provide body payload' );
     }
 
+    console.log('🐙', body)
     // Process the body of the request
     const request = await parseRequest(body)
     if (!request) {
@@ -73,6 +76,7 @@ app.get( "/cosign_trx", async ( req, res ) => {
 
         // Modify the resolved transaction to append the cosigning action
         const modified = prependNoopAction(resolved.transaction, POMELO_COSIGNER)
+        console.log('🍅', JSON.stringify(modified.toJSON(), null, 2))
 
         const {
             result,
@@ -87,6 +91,7 @@ app.get( "/cosign_trx", async ( req, res ) => {
                 code: 200,
                 data: {
                     request: result.data.req,
+                    transaction,
                     signatures,
                 },
             })
