@@ -9,6 +9,7 @@ import {
 import { cosignTransaction } from './utils/cosign'
 import { prependNoopAction } from './utils/noop'
 import { parseRequest } from './utils/parse'
+import { validateTransaction } from './utils/validate'
 import { Cosigner } from './types'
 
 import {
@@ -56,11 +57,13 @@ app.post( "/cosign_trx", async ( req, res ) => {
         return res.status(400).json(message)
     }
 
-    const signer = PermissionLevel.from(body.signer)
+    // allow only valid POMELO actions
+    if (!validateTransaction(transaction)) {
+        const message = 'Transaction contains not allowed actions.'
+        return res.status(400).json(message)
+    }
 
     try {
-
-        // TODO: make sure resolved.transaction.actions contains only valid POMELO actions
 
         // prepend actions with noop action
         const modified = prependNoopAction(transaction, POMELO_COSIGNER)
