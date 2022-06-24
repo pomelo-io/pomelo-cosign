@@ -13,7 +13,7 @@ export const CHAIN_ID = 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943
 export const NODEOS_ENDPOINT = process.env.NODEOS_ENDPOINT || "https://eos.eosn.io"
 
 export const COSIGN_ACCOUNT = process.env.COSIGN_ACCOUNT || 'noop.pomelo'
-export const COSIGN_PERMISSION = process.env.COSIGN_PERMISSION || 'noop'
+export const COSIGN_PERMISSION = process.env.COSIGN_PERMISSION || 'freecpu'
 export const COSIGN_CONTRACT = process.env.COSIGN_CONTRACT || 'noop.pomelo'
 export const COSIGN_PRIVATE_KEY = process.env.COSIGN_PRIVATE_KEY
 
