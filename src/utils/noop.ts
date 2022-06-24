@@ -41,7 +41,7 @@ export function prependNoopAction(
 export function getNoopAction(cosigner: Cosigner) {
     return {
         account: COSIGN_CONTRACT,
-        name: 'noop',
+        name: 'pay',
         authorization: [
             {
                 actor: cosigner.account,
@@ -57,15 +57,15 @@ export const noopAbi = ABI.from({
     types: [],
     structs: [
         {
-        name: 'noop',
+        name: 'pay',
         base: '',
         fields: []
         }
     ],
     actions: [
         {
-            name: 'noop',
-            type: 'noop',
+            name: 'pay',
+            type: 'pay',
             ricardian_contract: 'This action does nothing.'
         }
     ],
