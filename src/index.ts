@@ -8,10 +8,7 @@ import {
     validateTransaction,
 } from './cosign'
 
-import {
-    PORT,
-    POMELO_COSIGNER
-} from './config'
+import { PORT } from './config'
 
 const app = express();
 
@@ -22,7 +19,8 @@ app.post( "/cosign", async ( req, res ) => {
     try {
         const { body } = req;
         if (!body) throw 'Provide body payload';
-        if (!body.signer) throw 'Signer not supplied in resource request.'
+
+        console.log('🦐', body)
 
         // parse request body
         const transaction = await parseRequest(body)
@@ -32,10 +30,10 @@ app.post( "/cosign", async ( req, res ) => {
         if (!await validateTransaction(transaction)) throw 'Transaction contains not allowed actions.'
 
         // prepend actions with noop action
-        const modifiedTrx = prependNoopAction(transaction, POMELO_COSIGNER)
+        const modifiedTrx = prependNoopAction(transaction)
 
         // sign the transaction
-        const signature = await cosignTransaction(POMELO_COSIGNER, modifiedTrx)
+        const signature = await cosignTransaction(modifiedTrx)
 
         // Serve the resulting transaction and signature
         res.status(200).json({

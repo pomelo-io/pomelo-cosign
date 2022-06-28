@@ -11,15 +11,16 @@ import {
 import {
     CHAIN_ID,
     COSIGN_CONTRACT,
+    POMELO_COSIGNER,
     client,
 } from './config'
 
 import { Cosigner } from './types'
 
-export async function cosignTransaction( cosigner: Cosigner, transaction: Transaction ) {
+export async function cosignTransaction( transaction: Transaction ) {
     const digest = transaction.signingDigest(Checksum256.from(CHAIN_ID))
 
-    return cosigner.private.signDigest(digest)
+    return POMELO_COSIGNER.private.signDigest(digest)
 }
 
 
@@ -27,6 +28,7 @@ export async function parseRequest(body: any): Promise<Transaction | false> {
     try {
         // Resource Provider Specification: Process based on deserialized transaction
         if (body.transaction) {
+            const info = await client.v1.chain.get_info();
             const contracts: Name[] = body.transaction.actions.map((action: AnyAction) => Name.from(action.account))
             const abis = await Promise.all(contracts.map(async (account: Name) => {
                 return {
@@ -34,7 +36,11 @@ export async function parseRequest(body: any): Promise<Transaction | false> {
                     abi: await getCacheAbi(Name.from(account))
                 }
             }))
-            return Transaction.from(body.transaction, abis)
+            return Transaction.from({
+                ...info.getTransactionHeader(300),
+                ...body.transaction
+            }
+            , abis)
         }
     } catch (error) {
         console.log({ error }, 'error parsing incoming transaction')
@@ -60,22 +66,24 @@ export async function validateTransaction(trx: Transaction): Promise<Boolean> {
     return true
 }
 
-
 export const noopAbi = ABI.from({
     version: 'eosio::abi/1.1',
     types: [],
     structs: [
         {
-        name: 'freecpu',
-        base: '',
-        fields: []
+            name: 'noop',
+            base: '',
+            fields: [{
+                name: "referrer",
+                type: "name?"
+            }]
         }
     ],
     actions: [
         {
-            name: 'freecpu',
-            type: 'freecpu',
-            ricardian_contract: 'This action does nothing.'
+            name: 'noop',
+            type: 'noop',
+            ricardian_contract: "---\nspec_version: \"0.2.0\"\ntitle: noop\nsummary: 'Transaction CPU is covered by Pomelo.'\nicon: https://gateway.pinata.cloud/ipfs/QmNbkDh7ZSkRf7j1peg9YnDoBnJbVg5TMdRfVGYV3hxhhD#b74cf8b3d884f42fffea4bfe7070b3871e1845805c57973a48324af1228ad9cc\n---\n\nSupport the public good projects you love.\n\nPomelo is an open-source crowdfunding platform that multiplies your contributions."
         }
     ],
     tables: [],
@@ -83,13 +91,13 @@ export const noopAbi = ABI.from({
     variants: []
 })
 
-export function prependNoopAction( transaction: Transaction, cosigner: Cosigner ): Transaction {
+export function prependNoopAction( transaction: Transaction, referrer?: string ): Transaction {
     // Recreate the transaction
     return Transaction.from({
         ...transaction,
         // prepend the noop action before the rest of the actions
         actions: [
-            getNoopAction(cosigner),
+            getNoopAction(POMELO_COSIGNER, referrer),
             ...transaction.actions,
         ],
         // specify the CPU restrictions on the transaction
@@ -100,17 +108,19 @@ export function prependNoopAction( transaction: Transaction, cosigner: Cosigner 
     }])
 }
 
-export function getNoopAction(cosigner: Cosigner) {
+export function getNoopAction(cosigner: Cosigner, referrer?: string) {
     return {
         account: COSIGN_CONTRACT,
-        name: 'freecpu',
+        name: noopAbi.actions[0].name,
         authorization: [
             {
                 actor: cosigner.account,
                 permission: cosigner.permission,
             },
         ],
-        data: {},
+        data: {
+            referrer,
+        },
     }
 }
 
