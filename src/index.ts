@@ -20,8 +20,6 @@ app.post( "/cosign", async ( req, res ) => {
         const { body } = req;
         if (!body) throw 'Provide body payload';
 
-        console.log('🦐', body)
-
         // parse request body
         const transaction = await parseRequest(body)
         if (!transaction) throw 'Transaction not supplied in resource request.'

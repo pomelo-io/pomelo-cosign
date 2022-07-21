@@ -28,8 +28,7 @@ if (!process.env.COSIGN_PRIVATE_KEY) throw new Error("[COSIGN_PRIVATE_KEY] is re
 export const POMELO_COSIGNER: Cosigner = {
     account: Name.from(COSIGN_ACCOUNT),
     permission: Name.from(COSIGN_PERMISSION),
-    private: PrivateKey.from(COSIGN_PRIVATE_KEY),
-    public: PrivateKey.from(COSIGN_PRIVATE_KEY).toPublic(),
+    private: PrivateKey.from(COSIGN_PRIVATE_KEY)
 }
 
 export const MAX_CPU_USAGE_MS = 20

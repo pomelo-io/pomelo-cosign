@@ -6,6 +6,7 @@ import {
     ABI,
     ABIDef,
     API,
+    PermissionLevel,
 } from '@greymass/eosio'
 
 import {
@@ -93,11 +94,12 @@ export const noopAbi = ABI.from({
 
 export function prependNoopAction( transaction: Transaction, referrer?: string ): Transaction {
     // Recreate the transaction
+    const signer = transaction.actions[0].authorization[0];
     return Transaction.from({
         ...transaction,
         // prepend the noop action before the rest of the actions
         actions: [
-            getNoopAction(POMELO_COSIGNER, referrer),
+            getNoopAction(POMELO_COSIGNER, signer, referrer),
             ...transaction.actions,
         ],
         // specify the CPU restrictions on the transaction
@@ -105,10 +107,11 @@ export function prependNoopAction( transaction: Transaction, referrer?: string )
     }, [{
         contract: COSIGN_CONTRACT,
         abi: noopAbi
-    }])
+        }]
+    )
 }
 
-export function getNoopAction(cosigner: Cosigner, referrer?: string) {
+export function getNoopAction(cosigner: Cosigner, signer: PermissionLevel, referrer?: string) {
     return {
         account: COSIGN_CONTRACT,
         name: noopAbi.actions[0].name,
@@ -117,6 +120,7 @@ export function getNoopAction(cosigner: Cosigner, referrer?: string) {
                 actor: cosigner.account,
                 permission: cosigner.permission,
             },
+            signer
         ],
         data: {
             referrer,
